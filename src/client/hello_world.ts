@@ -91,7 +91,10 @@ export async function establishConnection(): Promise<void> {
   /* Get the connection object and retrieve the 
    version from the connection object. */
 
-  //Insert the Step 1 code from the tutorial here
+connection = new Connection("http://127.0.0.1:8899","confirmed");
+const version = await connection.getVersion();
+console.log('Connection to cluster established:', version);
+
 }
 
 /**
@@ -101,12 +104,17 @@ export async function establishPayer(): Promise<void> {
   
   //Step 2: Generate a keypair - this would be an account that pays for the calls to the program
   
-  //Insert the Step 2 code from the tutorial here
-  
-  //Step 3: Requesting an airdrop
+payer = Keypair.generate();
+console.log("Public Key of Payer is:", payer.publicKey.toString());
 
-   //Insert the Step 3 code from the tutorial here
-   
+//Step 3: Requesting an airdrop
+const sig = await connection.requestAirdrop(
+  payer.publicKey,
+  2 * LAMPORTS_PER_SOL,
+);
+
+await connection.confirmTransaction(sig);
+
   console.log(
     'Using account',
     payer.publicKey.toBase58(),
@@ -200,13 +208,19 @@ export async function sayHello(): Promise<void> {
   //Create a Hello transaction to the deployed contract
   console.log('Saying hello to', greetedPubkey.toBase58());
   
-  // STEP 4: Create an instruction to be sent to the program
-  
-  //Insert the Step 4 code from the tutorial here
+// STEP 4: Create an instruction to be sent to the program
+const instruction = new TransactionInstruction({
+  keys: [{pubkey: greetedPubkey, isSigner: false, isWritable: true}],
+  programId,
+  data: Buffer.alloc(0), // All instructions are hellos
+});
 
-  //STEP 5: Create a transaction to be sent to the blockchain containing the instruction
-  
-  //Insert the Step 5 code from the tutorial here
+//STEP 5: Create a transaction to be sent to the blockchain containing the instruction
+await sendAndConfirmTransaction(
+  connection,
+  new Transaction().add(instruction),
+  [payer],
+);
 
 }
 
